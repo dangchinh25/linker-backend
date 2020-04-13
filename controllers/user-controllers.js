@@ -126,7 +126,58 @@ const signUp = async (req, res, next) => {
 	})
 }
 
-const login = async (req, res, next) => {}
+const login = async (req, res, next) => {
+	const { email, password } = req.body
+
+	let existingUSer
+
+	try {
+		existingUSer = await UserAuth.findOne({ email: email })
+	} catch (err) {
+		return next(
+			new HttpError("Logging in failed, please try again later.", 500)
+		)
+	}
+
+	if (!existingUSer)
+		return next(new HttpError("Invalid email/password", 403))
+
+	let isValidPassword = false
+	try {
+		isValidPassword = await bcrypt.compare(
+			password,
+			existingUSer.password
+		)
+	} catch (err) {
+		return next(
+			new HttpError("Logging in failed, please try again later.", 500)
+		)
+	}
+
+	if (!isValidPassword)
+		return next(
+			new HttpError("Logging in failed, please try again later.", 500)
+		)
+
+	let token
+	try {
+		token = jwt.sign(
+			{ userId: existingUSer.id, email: existingUSer.email },
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: "1h" }
+		)
+	} catch (err) {
+		return next(
+			new HttpError("Loggin in failed, please try again later.", 500)
+		)
+	}
+
+	res.json({
+		userId: existingUSer.id,
+		email: existingUSer.email,
+		token: token,
+	})
+}
 
 exports.onboarding = onboarding
 exports.signUp = signUp

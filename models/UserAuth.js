@@ -7,7 +7,6 @@ const newUser = new Schema({
 	password: { type: String, required: true, minlength: 6 },
 	userData: {
 		type: mongoose.Types.ObjectId,
-		required: true,
 		ref: "UserData",
 	},
 })
